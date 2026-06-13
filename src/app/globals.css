@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #FAFAF9;
+    color: #1C1917;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Safe area for mobile bottom nav */
+  .safe-area-bottom {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #D6D3D1;
+    border-radius: 100px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #A8A29E;
+  }
+
+  /* Focus styles */
+  :focus-visible {
+    outline: 2px solid #4F46E5;
+    outline-offset: 2px;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: #C7D2FE;
+    color: #1C1917;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
