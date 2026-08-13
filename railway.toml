@@ -1,0 +1,12 @@
+# Railway leest dit bestand automatisch bij een deploy.
+# De Dockerfile in de repo-root bouwt zowel de client als de server.
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

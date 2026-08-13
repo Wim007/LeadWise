@@ -1,31 +1,23 @@
 {
-  "name": "coach-assistent",
-  "version": "0.1.0",
+  "name": "carnegie-coach",
+  "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "type-check": "tsc --noEmit"
+  "description": "Persoonlijke AI-gedragstrainer voor betere gesprekken.",
+  "engines": {
+    "node": ">=20"
   },
-  "dependencies": {
-    "next": "14.2.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "@anthropic-ai/sdk": "^0.27.0",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.4.0"
+  "scripts": {
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
+    "dev": "concurrently -n server,client -c cyan,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build": "npm --prefix client install && npm --prefix client run build",
+    "start": "npm --prefix server run db:migrate && npm --prefix server start",
+    "db:migrate": "npm --prefix server run db:migrate",
+    "lint": "npm --prefix client run lint",
+    "postinstall": "npm --prefix server install"
   },
   "devDependencies": {
-    "@types/node": "^20.14.10",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "autoprefixer": "^10.4.19",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "14.2.5",
-    "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.6",
-    "typescript": "^5.5.3"
+    "concurrently": "^9.1.0"
   }
 }
