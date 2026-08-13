@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { query } from '../db.js';
 import { asyncRoute } from '../lib/validate.js';
 import { developmentThemesPrompt } from '../prompts/carnegieCoach.js';
-import { askCoach } from '../services/anthropic.js';
+import { askCoach } from '../services/ai.js';
 
 const router = Router();
 

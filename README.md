@@ -38,11 +38,23 @@ noodsituatie stopt de coach met coachen en verwijst hij naar echte hulp.
 | Frontend | React 18 + Vite, JavaScript, mobiel-eerst, eigen CSS (geen framework) |
 | Backend | Node.js 22 + Express, JavaScript, ES-modules |
 | Database | PostgreSQL via de `pg`-library (geen ORM) |
-| AI | Anthropic API, uitsluitend server-side |
+| AI | OpenAI of Anthropic, uitsluitend server-side |
 | Hosting | Railway, één service met een Dockerfile |
 
 De sleutel voor de AI blijft altijd op de server. De browser praat alleen met
 de eigen API en krijgt nooit een sleutel te zien.
+
+### Van AI-aanbieder wisselen
+
+`AI_PROVIDER` bepaalt wie de coach aandrijft: `openai` of `anthropic`. Je vult
+alleen de sleutel van de gekozen aanbieder in; ontbreekt die, dan stopt de
+server bij het starten met een duidelijke melding in plaats van pas bij je
+eerste gesprek. Wisselen kost geen codewijziging — je past de variabele aan en
+herstart. `GET /api/health` laat zien welke motor actief is.
+
+De coachinstructies staan los van de aanbieder in
+[`server/src/prompts/carnegieCoach.js`](server/src/prompts/carnegieCoach.js) en
+gelden dus voor allebei.
 
 ## Projectstructuur
 
@@ -59,7 +71,8 @@ server/
   src/migrate.js   Voert het schema uit
   src/routes/      Endpoints per onderwerp
   src/prompts/     De coachinstructie
-  src/services/    Koppeling met de Anthropic API
+  src/services/    ai.js kiest de aanbieder; openai.js en anthropic.js
+                   zijn de koppelingen zelf
   src/lib/         Validatie, foutafhandeling, veiligheidscheck
 Dockerfile         Bouwt client en server tot één image
 railway.toml       Railway-configuratie
@@ -75,7 +88,7 @@ npm run install:all
 
 # 2. Instellingen
 cp .env.example .env
-#    Vul DATABASE_URL en ANTHROPIC_API_KEY in.
+#    Vul DATABASE_URL in, kies AI_PROVIDER en zet de bijbehorende sleutel.
 
 # 3. Database klaarzetten
 createdb carnegie_coach     # als de database nog niet bestaat
@@ -112,10 +125,16 @@ curl http://localhost:3001/api/health
 | Variabele | Verplicht | Toelichting |
 |---|---|---|
 | `DATABASE_URL` | ja | PostgreSQL-connectiestring. Op Railway automatisch gevuld. |
-| `ANTHROPIC_API_KEY` | ja | Je Anthropic API-sleutel. Zonder deze sleutel start de server niet. |
+| `AI_PROVIDER` | nee | `openai` of `anthropic`. Standaard `anthropic`. |
+| `OPENAI_API_KEY` | bij `openai` | Je OpenAI API-sleutel. |
+| `OPENAI_MODEL` | nee | Standaard `gpt-4o`. Zet hier het model dat bij jouw account hoort. |
+| `ANTHROPIC_API_KEY` | bij `anthropic` | Je Anthropic API-sleutel. |
 | `ANTHROPIC_MODEL` | nee | Standaard `claude-sonnet-5`. |
 | `PORT` | nee | Standaard 3001. Railway vult dit zelf. |
 | `DATABASE_SSL` | nee | Zet op `true` om TLS af te dwingen als je verbinding dat nodig heeft maar `sslmode` niet in de URL staat. |
+
+Alleen de sleutel van de gekozen aanbieder is verplicht. Klopt het model niet,
+dan krijg je een melding die precies zegt welke variabele je moet aanpassen.
 
 Zet nooit een echte sleutel in `.env.example` of in een commit. `.env` staat in
 `.gitignore`.
@@ -152,10 +171,21 @@ de oefenactie blijven bewaard, want dat is wat je nodig hebt voor continuïteit.
    *Variables* → *New Variable* → *Add Reference* → kies `DATABASE_URL` van de
    Postgres-service. Zonder deze koppeling start de server niet.
 
-5. **Zet de AI-sleutel.** Voeg in hetzelfde tabblad toe:
+5. **Zet de AI-sleutel.** Voeg in hetzelfde tabblad toe wat bij je aanbieder hoort.
+
+   Met OpenAI:
 
    | Naam | Waarde |
    |---|---|
+   | `AI_PROVIDER` | `openai` |
+   | `OPENAI_API_KEY` | je OpenAI API-sleutel |
+   | `OPENAI_MODEL` | bijvoorbeeld `gpt-4o` (optioneel) |
+
+   Met Anthropic:
+
+   | Naam | Waarde |
+   |---|---|
+   | `AI_PROVIDER` | `anthropic` |
    | `ANTHROPIC_API_KEY` | je Anthropic API-sleutel |
    | `ANTHROPIC_MODEL` | `claude-sonnet-5` (optioneel) |
 
@@ -179,8 +209,9 @@ de oefenactie blijven bewaard, want dat is wat je nodig hebt voor continuïteit.
 curl https://jouw-app.up.railway.app/api/health
 ```
 
-Verwacht: `{"status":"ok","database":"ok",...}`. Staat er `"database":
-"unreachable"`, dan is `DATABASE_URL` niet gekoppeld aan de service.
+Verwacht: `{"status":"ok","database":"ok","aiProvider":"openai",...}`. Staat er
+`"database": "unreachable"`, dan is `DATABASE_URL` niet gekoppeld aan de
+service. Bij `aiProvider` zie je welke AI-motor actief is.
 
 ## Bekende beperkingen van de MVP
 
@@ -200,4 +231,4 @@ Verwacht: `{"status":"ok","database":"ok",...}`. Staat er `"database":
   Het is een vangnet, geen risicotaxatie, en het kan zowel te vaak als te weinig
   aanslaan.
 - **Onbeperkt gebruik.** Er zit geen rem op het aantal AI-aanroepen; je
-  Anthropic-verbruik is je eigen verantwoordelijkheid.
+  verbruik bij OpenAI of Anthropic is je eigen verantwoordelijkheid.

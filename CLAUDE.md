@@ -26,8 +26,9 @@ server/   Node.js 22 + Express, ES-modules, pg (geen ORM)
   src/migrate.js    Voert schema.sql uit
   src/routes/       health zit in index.js; verder scenarios, textReview,
                     reflections, progress, data
-  src/prompts/      carnegieCoach.js — alle AI-instructies
-  src/services/     anthropic.js — enige plek die de AI aanroept
+  src/prompts/      carnegieCoach.js — alle AI-instructies, providerneutraal
+  src/services/     ai.js kiest op AI_PROVIDER; openai.js en anthropic.js zijn
+                    de koppelingen. Routes praten alleen met ai.js.
   src/lib/          errors.js, validate.js, safety.js, env.js
 ```
 
@@ -60,8 +61,12 @@ Draai na elke inhoudelijke wijziging minstens `npm run lint` en `npm run build`.
 
 **Sleutels**
 
-- `ANTHROPIC_API_KEY` blijft server-side. Nooit naar de browser, nooit in
-  client-code, nooit in een commit. Geen echte sleutels in `.env.example`.
+- `OPENAI_API_KEY` en `ANTHROPIC_API_KEY` blijven server-side. Nooit naar de
+  browser, nooit in client-code, nooit in een commit. Geen echte sleutels in
+  `.env.example`.
+- `AI_PROVIDER` bepaalt welke van de twee wordt gebruikt. Alleen de sleutel van
+  de gekozen aanbieder is verplicht; ontbreekt die, dan stopt de server bij het
+  starten.
 
 **De coach**
 
@@ -100,8 +105,12 @@ Commit en push niets zonder expliciete opdracht.
 - TLS naar de database wordt afgeleid uit `sslmode` in `DATABASE_URL` of uit
   `DATABASE_SSL`, niet uit `NODE_ENV`. Railway's interne verbinding heeft geen
   TLS; forceren breekt de deploy.
-- Het model moet JSON teruggeven. `services/anthropic.js` parseert dat tolerant
-  en geeft een nette Nederlandse fout als het misgaat.
+- Het model moet JSON teruggeven. `services/ai.js` parseert dat tolerant en
+  geeft een nette Nederlandse fout als het misgaat. Nieuwe aanbieder toevoegen?
+  Eén bestand met `assertConfigured`, `modelName` en `complete`, en registreren
+  in `ai.js` — de routes en prompts blijven ongemoeid.
+- OpenAI wisselde van `max_tokens` naar `max_completion_tokens`. `openai.js`
+  probeert de nieuwe naam, valt bij een 400 terug op de oude en onthoudt dat.
 - De thema-analyse op de Voortgangspagina wordt in het geheugen gecachet op de
   inhoud van de ontwikkelpunten, en valt bij een AI-storing terug op de ruwe
   punten. De pagina mag nooit omvallen op de AI.

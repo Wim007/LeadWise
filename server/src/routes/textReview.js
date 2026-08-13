@@ -10,7 +10,7 @@ import {
   requireText,
 } from '../lib/validate.js';
 import { textReviewPrompt } from '../prompts/carnegieCoach.js';
-import { askCoach } from '../services/anthropic.js';
+import { askCoach } from '../services/ai.js';
 
 const router = Router();
 

@@ -14,6 +14,7 @@ import progressRoutes from './routes/progress.js';
 import reflectionRoutes from './routes/reflections.js';
 import scenarioRoutes from './routes/scenarios.js';
 import textReviewRoutes from './routes/textReview.js';
+import { activeProvider } from './services/ai.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -34,6 +35,7 @@ app.get('/api/health', async (_req, res) => {
   res.status(database === 'ok' ? 200 : 503).json({
     status: database === 'ok' ? 'ok' : 'degraded',
     database,
+    aiProvider: activeProvider,
     contexts: CONTEXTEN,
     time: new Date().toISOString(),
   });
