@@ -1,67 +1,48 @@
+/**
+ * Koppeling met de Anthropic API.
+ *
+ * Wordt aangesproken via services/ai.js; de routes gebruiken dit bestand niet
+ * rechtstreeks. Geeft de kale tekst van het model terug — het parsen van JSON
+ * gebeurt op één plek, in ai.js.
+ */
 import Anthropic from '@anthropic-ai/sdk';
 
 import { AppError } from '../lib/errors.js';
 
-if (!process.env.ANTHROPIC_API_KEY) {
-  throw new Error(
-    'ANTHROPIC_API_KEY ontbreekt. Zet hem in .env (lokaal) of in de Railway-variabelen.'
-  );
+const DEFAULT_MODEL = 'claude-sonnet-5';
+
+let client = null;
+
+export function modelName() {
+  return process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
 }
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
-
-/**
- * Haalt het JSON-object uit het antwoord van het model.
- * Het model is geïnstrueerd om kaal JSON te geven, maar we blijven tolerant
- * voor een codeblok of een inleidende zin.
- */
-function parseJson(raw) {
-  let text = raw.trim();
-
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) text = fenced[1].trim();
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if (start !== -1 && end > start) {
-      try {
-        return JSON.parse(text.slice(start, end + 1));
-      } catch {
-        /* valt door naar de fout hieronder */
-      }
-    }
+/** Draait bij het starten van de server, niet bij het eerste gesprek. */
+export function assertConfigured() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error(
+      'ANTHROPIC_API_KEY ontbreekt, terwijl AI_PROVIDER op "anthropic" staat. ' +
+        'Zet de sleutel in .env (lokaal) of in de Railway-variabelen.'
+    );
   }
-
-  throw new AppError(
-    'AI_BAD_RESPONSE',
-    'De coach gaf een onverwacht antwoord. Probeer het opnieuw.',
-    502
-  );
 }
 
-/**
- * Roept het model aan en geeft het geparste JSON-antwoord terug.
- *
- * @param {object} options
- * @param {string} options.system     Systeemprompt.
- * @param {Array}  [options.messages] Berichtgeschiedenis in Anthropic-formaat.
- * @param {string} [options.user]     Kortere weg voor één gebruikersbericht.
- * @param {number} [options.maxTokens]
- */
-export async function askCoach({ system, messages, user, maxTokens = 1200 }) {
-  const payload = messages ?? [{ role: 'user', content: user }];
+function getClient() {
+  if (!client) {
+    client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  }
+  return client;
+}
 
+export async function complete({ system, messages, maxTokens }) {
   let response;
+
   try {
-    response = await client.messages.create({
-      model: MODEL,
+    response = await getClient().messages.create({
+      model: modelName(),
       max_tokens: maxTokens,
       system,
-      messages: payload,
+      messages,
     });
   } catch (err) {
     console.error('[anthropic] aanroep mislukt:', err.message);
@@ -80,6 +61,13 @@ export async function askCoach({ system, messages, user, maxTokens = 1200 }) {
         429
       );
     }
+    if (err.status === 404 || /model/i.test(err.message ?? '')) {
+      throw new AppError(
+        'AI_MODEL',
+        `Het model "${modelName()}" is niet beschikbaar voor deze sleutel. Pas ANTHROPIC_MODEL aan.`,
+        502
+      );
+    }
     throw new AppError(
       'AI_UNAVAILABLE',
       'De coach is nu niet bereikbaar. Probeer het zo opnieuw.',
@@ -87,10 +75,8 @@ export async function askCoach({ system, messages, user, maxTokens = 1200 }) {
     );
   }
 
-  const text = response.content
+  return response.content
     .filter((block) => block.type === 'text')
     .map((block) => block.text)
     .join('\n');
-
-  return parseJson(text);
 }

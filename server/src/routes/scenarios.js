@@ -16,7 +16,7 @@ import {
   scenarioStartPrompt,
   scenarioTurnPrompt,
 } from '../prompts/carnegieCoach.js';
-import { askCoach } from '../services/anthropic.js';
+import { askCoach } from '../services/ai.js';
 
 const router = Router();
 
@@ -49,7 +49,7 @@ async function loadMessages(sessionId) {
   return rows;
 }
 
-/** Zet onze berichten om naar het formaat van de Anthropic API. */
+/** Zet onze berichten om naar het formaat dat beide AI-aanbieders verwachten. */
 function toApiMessages(messages) {
   return messages.map((m) => ({
     role: m.role === 'user' ? 'user' : 'assistant',

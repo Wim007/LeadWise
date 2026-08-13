@@ -5,7 +5,7 @@ import { AppError } from '../lib/errors.js';
 import { CRISIS_ANTWOORD, detectCrisis } from '../lib/safety.js';
 import { asyncRoute, normalisePrinciples, requireText } from '../lib/validate.js';
 import { reflectionPrompt } from '../prompts/carnegieCoach.js';
-import { askCoach } from '../services/anthropic.js';
+import { askCoach } from '../services/ai.js';
 
 const router = Router();
 
