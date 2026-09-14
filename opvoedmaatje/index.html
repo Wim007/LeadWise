@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Opvoedmaatje</title>
+  <meta name="description" content="Opvoedmaatje is een Nederlandstalige AI-assistent die ouders ondersteunt bij opvoedvragen en dagelijkse situaties met kinderen. Nu in testfase.">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%232563eb'/%3E%3Ccircle cx='11' cy='14' r='3' fill='white'/%3E%3Ccircle cx='21' cy='14' r='3' fill='white'/%3E%3Cpath d='M10 21c3 3 9 3 12 0' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --blauw: #2563eb;
+      --blauw-donker: #1e40af;
+      --blauw-licht: #dbeafe;
+      --blauw-zacht: #eff6ff;
+      --tekst: #1f2937;
+      --tekst-zacht: #4b5563;
+      --rand: #e5e7eb;
+      --vlak: #f9fafb;
+      --wit: #ffffff;
+      --geel-vlak: #fefce8;
+      --geel-rand: #fde68a;
+      --rood-vlak: #fef2f2;
+      --rood-rand: #fecaca;
+      --rood-tekst: #991b1b;
+      --radius: 12px;
+      --max: 44rem;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 1.0625rem;
+      line-height: 1.6;
+      color: var(--tekst);
+      background: var(--wit);
+    }
+
+    h1, h2, h3 {
+      line-height: 1.25;
+      margin: 0 0 0.75rem;
+      color: var(--tekst);
+      font-weight: 700;
+      text-wrap: balance;
+    }
+
+    h1 { font-size: clamp(1.9rem, 5vw, 2.75rem); }
+    h2 { font-size: clamp(1.5rem, 4vw, 2rem); margin-bottom: 1rem; }
+    h3 { font-size: 1.125rem; margin-bottom: 0.4rem; }
+
+    p, ul, ol, dl { margin: 0 0 1rem; }
+    ul, ol { padding-left: 1.4rem; }
+    li { margin-bottom: 0.4rem; }
+    li::marker { color: var(--blauw); }
+
+    a {
+      color: var(--blauw-donker);
+      text-decoration: underline;
+      text-underline-offset: 0.15em;
+    }
+    a:hover { color: var(--blauw); }
+
+    :focus-visible {
+      outline: 3px solid var(--blauw);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    .skip {
+      position: absolute;
+      left: 1rem;
+      top: -4rem;
+      background: var(--blauw-donker);
+      color: var(--wit);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      z-index: 100;
+      text-decoration: none;
+    }
+    .skip:focus { top: 1rem; }
+
+    .wrap {
+      width: 100%;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    header.top {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--rand);
+      z-index: 10;
+    }
+
+    .top .wrap {
+      max-width: 52rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 3.75rem;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--tekst);
+      text-decoration: none;
+    }
+
+    .logo svg { width: 1.75rem; height: 1.75rem; flex: none; }
+
+    nav ul {
+      display: none;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      gap: 1.25rem;
+    }
+
+    nav a {
+      white-space: nowrap;
+      text-decoration: none;
+      color: var(--tekst-zacht);
+      font-size: 0.95rem;
+      padding: 0.3rem 0;
+    }
+    nav a:hover, nav a[aria-current="true"] { color: var(--blauw-donker); }
+    nav a[aria-current="true"] { text-decoration: underline; text-underline-offset: 0.3em; }
+
+    @media (min-width: 40rem) {
+      nav ul { display: flex; }
+    }
+
+    .knop {
+      display: inline-block;
+      background: var(--blauw);
+      color: var(--wit);
+      font-weight: 600;
+      text-decoration: none;
+      padding: 0.85rem 1.5rem;
+      border-radius: 999px;
+      border: 2px solid var(--blauw);
+      transition: background 0.15s ease;
+    }
+    .knop:hover { background: var(--blauw-donker); border-color: var(--blauw-donker); color: var(--wit); }
+    .knop:focus-visible { outline-offset: 4px; }
+
+    .knop.klein { padding: 0.5rem 1rem; font-size: 0.95rem; white-space: nowrap; flex: none; }
+    .knop.klein .lang { display: none; }
+
+    @media (min-width: 30rem) {
+      .knop.klein .lang { display: inline; }
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--blauw-licht);
+      color: var(--blauw-donker);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+
+    section { padding: 3rem 0; }
+    section + section { border-top: 1px solid var(--rand); }
+    section.vlak { background: var(--vlak); border-top: none; }
+
+    .hero {
+      padding: 3.5rem 0 3rem;
+      background: linear-gradient(180deg, var(--blauw-zacht) 0%, var(--wit) 100%);
+    }
+
+    .hero p.intro {
+      font-size: 1.2rem;
+      color: var(--tekst-zacht);
+      margin-bottom: 1.75rem;
+      max-width: 36rem;
+    }
+
+    .hero .acties {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .hero .acties small { color: var(--tekst-zacht); }
+
+    .stappen {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      counter-reset: stap;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .stappen li {
+      counter-increment: stap;
+      position: relative;
+      padding: 1.1rem 1.1rem 1.1rem 4rem;
+      background: var(--wit);
+      border: 1px solid var(--rand);
+      border-radius: var(--radius);
+      margin: 0;
+    }
+
+    .stappen li::before {
+      content: counter(stap);
+      position: absolute;
+      left: 1.1rem;
+      top: 1.1rem;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: var(--blauw);
+      color: var(--wit);
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+    }
+
+    .stappen li p:last-child { margin-bottom: 0; }
+
+    .kaarten {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.25rem;
+    }
+
+    .kaarten li {
+      margin: 0;
+      padding: 0.9rem 1rem;
+      background: var(--wit);
+      border: 1px solid var(--rand);
+      border-radius: var(--radius);
+      font-weight: 600;
+    }
+
+    .niet {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .niet li {
+      padding-left: 2rem;
+      position: relative;
+      margin-bottom: 0.75rem;
+    }
+
+    .niet li::before {
+      content: "";
+      position: absolute;
+      left: 0.35rem;
+      top: 0.55em;
+      width: 0.9rem;
+      height: 0.9rem;
+      border: 2px solid var(--tekst-zacht);
+      border-radius: 50%;
+      background:
+        linear-gradient(45deg, transparent 43%, var(--tekst-zacht) 43%, var(--tekst-zacht) 57%, transparent 57%);
+    }
+
+    .let-op {
+      background: var(--rood-vlak);
+      border: 1px solid var(--rood-rand);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+    .let-op p { margin: 0; color: var(--rood-tekst); font-weight: 600; }
+
+    .hulp {
+      display: grid;
+      gap: 0.75rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .hulp li {
+      margin: 0;
+      padding: 1rem 1.1rem;
+      background: var(--wit);
+      border: 1px solid var(--rand);
+      border-radius: var(--radius);
+    }
+
+    .hulp strong { display: block; font-size: 1.05rem; margin-bottom: 0.15rem; }
+    .hulp span { color: var(--tekst-zacht); }
+
+    .hulp a[href^="tel:"] {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .feit {
+      background: var(--geel-vlak);
+      border: 1px solid var(--geel-rand);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      margin-top: 1.5rem;
+    }
+    .feit p { margin: 0; }
+
+    .privacy dl {
+      display: grid;
+      gap: 1rem;
+      margin: 0;
+    }
+    .privacy dt { font-weight: 700; }
+    .privacy dd { margin: 0.2rem 0 0; color: var(--tekst-zacht); }
+
+    .faq details {
+      border: 1px solid var(--rand);
+      border-radius: var(--radius);
+      background: var(--wit);
+      margin-bottom: 0.75rem;
+    }
+
+    .faq summary {
+      cursor: pointer;
+      font-weight: 600;
+      padding: 1rem 2.75rem 1rem 1.1rem;
+      list-style: none;
+      position: relative;
+      border-radius: var(--radius);
+    }
+    .faq summary::-webkit-details-marker { display: none; }
+
+    .faq summary::after {
+      content: "";
+      position: absolute;
+      right: 1.2rem;
+      top: 50%;
+      width: 0.6rem;
+      height: 0.6rem;
+      border-right: 2px solid var(--blauw);
+      border-bottom: 2px solid var(--blauw);
+      transform: translateY(-70%) rotate(45deg);
+      transition: transform 0.15s ease;
+    }
+    .faq details[open] summary::after { transform: translateY(-30%) rotate(-135deg); }
+
+    .faq details div {
+      padding: 0 1.1rem 1.1rem;
+      color: var(--tekst-zacht);
+    }
+    .faq details div p:last-child { margin-bottom: 0; }
+
+    .cta {
+      text-align: center;
+      background: var(--blauw-zacht);
+      border-top: none;
+    }
+    .cta p { max-width: 32rem; margin: 0 auto 1.5rem; color: var(--tekst-zacht); }
+
+    footer {
+      border-top: 1px solid var(--rand);
+      padding: 2rem 0 2.5rem;
+      color: var(--tekst-zacht);
+      font-size: 0.95rem;
+    }
+    footer p { margin-bottom: 0.5rem; }
+    footer ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.25rem;
+    }
+    footer li { margin: 0; }
+
+    .plaatshouder {
+      background: var(--geel-vlak);
+      border: 1px dashed var(--geel-rand);
+      border-radius: 6px;
+      padding: 0 0.35rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.9em;
+      color: #713f12;
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#inhoud">Direct naar de inhoud</a>
+
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="#top" aria-label="Opvoedmaatje, naar boven">
+        <svg viewBox="0 0 32 32" role="img" aria-label="Logo van Opvoedmaatje, een glimlachend gezichtje">
+          <circle cx="16" cy="16" r="16" fill="#2563eb"/>
+          <circle cx="11" cy="14" r="3" fill="#ffffff"/>
+          <circle cx="21" cy="14" r="3" fill="#ffffff"/>
+          <path d="M10 21c3 3 9 3 12 0" stroke="#ffffff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span>Opvoedmaatje</span>
+      </a>
+      <nav aria-label="Hoofdnavigatie">
+        <ul>
+          <li><a href="#hoe">Hoe het werkt</a></li>
+          <li><a href="#veiligheid">Veiligheid</a></li>
+          <li><a href="#privacy">Privacy</a></li>
+          <li><a href="#vragen">Vragen</a></li>
+        </ul>
+      </nav>
+      <a class="knop klein" href="[URL-START-GESPREK]" aria-label="Start een gesprek">Start<span class="lang"> een gesprek</span></a>
+    </div>
+  </header>
+
+  <main id="inhoud">
+    <section class="hero" id="top" aria-labelledby="hero-titel">
+      <div class="wrap">
+        <span class="badge">Nu in testfase</span>
+        <h1 id="hero-titel">Opvoedmaatje denkt met je mee bij vragen over je kind.</h1>
+        <p class="intro">
+          Opvoedmaatje is een Nederlandstalige AI-assistent voor ouders en verzorgers.
+          Je beschrijft een situatie met je kind, Opvoedmaatje helpt je die te begrijpen
+          en samen kies je één kleine stap die je kunt proberen.
+        </p>
+        <div class="acties">
+          <a class="knop" href="[URL-START-GESPREK]">Start een gesprek</a>
+          <small>Tijdens de testfase gratis te gebruiken.</small>
+        </div>
+      </div>
+    </section>
+
+    <section id="hoe" aria-labelledby="hoe-titel">
+      <div class="wrap">
+        <h2 id="hoe-titel">Hoe het werkt</h2>
+        <ol class="stappen">
+          <li>
+            <h3>Je stelt een vraag</h3>
+            <p>Beschrijf in je eigen woorden wat er speelt met je kind. Een korte schets is genoeg. Opvoedmaatje vraagt door als iets nog niet duidelijk is.</p>
+          </li>
+          <li>
+            <h3>Opvoedmaatje denkt met je mee</h3>
+            <p>Je krijgt hulp om te begrijpen wat er in de situatie gebeurt en welke mogelijkheden je hebt. Geen oordeel en geen lange theorie.</p>
+          </li>
+          <li>
+            <h3>Je kiest één kleine stap</h3>
+            <p>Samen kom je tot één haalbare stap die past bij jou en je kind. Iets wat je vandaag of morgen kunt proberen.</p>
+          </li>
+          <li>
+            <h3>Je komt later terug op hoe het ging</h3>
+            <p>Opvoedmaatje vraagt na 1, 3 en 7 dagen hoe het is gegaan. Zo kun je bijsturen en verder bouwen op wat werkt.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="vlak" id="helpt" aria-labelledby="helpt-titel">
+      <div class="wrap">
+        <h2 id="helpt-titel">Waar het bij helpt</h2>
+        <p>Opvoedmaatje is er voor de dagelijkse situaties waar de meeste ouders wel eens mee zitten. Bijvoorbeeld:</p>
+        <ul class="kaarten">
+          <li>Slapen en naar bed gaan</li>
+          <li>Driftbuien en boosheid</li>
+          <li>Schermtijd en gamen</li>
+          <li>Ruzie tussen kinderen</li>
+          <li>Grenzen stellen</li>
+          <li>Omgaan met pubers</li>
+        </ul>
+        <p>Je kunt Opvoedmaatje gebruiken tijdens een situatie, achteraf, of vooraf als je iets ziet aankomen. Voor kinderen van 0 tot 18 jaar.</p>
+      </div>
+    </section>
+
+    <section id="niet" aria-labelledby="niet-titel">
+      <div class="wrap">
+        <h2 id="niet-titel">Wat Opvoedmaatje niet is</h2>
+        <p>Het is belangrijk dat je weet waar de grens ligt.</p>
+        <ul class="niet">
+          <li><strong>Geen vervanging van huisarts, jeugdhulp of therapeut.</strong> Heb je zorgen over de gezondheid of ontwikkeling van je kind, ga dan naar een professional.</li>
+          <li><strong>Geen diagnoses.</strong> Opvoedmaatje kijkt naar situaties en gedrag, niet naar stoornissen of labels.</li>
+          <li><strong>Geen hulpverlener in noodsituaties.</strong> Bij acuut gevaar bel je 112. Zie hieronder welke hulp er is.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="vlak" id="veiligheid" aria-labelledby="veiligheid-titel">
+      <div class="wrap">
+        <h2 id="veiligheid-titel">Veiligheid</h2>
+        <p>
+          Bij signalen van gevaar voor jou of je kind geeft Opvoedmaatje voorrang aan veiligheid.
+          Het gesprek gaat dan niet verder over opvoeden, maar over de juiste instantie om nu te bellen.
+        </p>
+        <div class="let-op">
+          <p>Bij direct levensgevaar of acuut gevaar: bel <a href="tel:112">112</a>.</p>
+        </div>
+        <ul class="hulp">
+          <li>
+            <strong>113 Zelfmoordpreventie</strong>
+            <span><a href="tel:113">113</a> of gratis <a href="tel:08000113">0800-0113</a>, dag en nacht. Chat via <a href="https://www.113.nl" rel="noopener">113.nl</a>.</span>
+          </li>
+          <li>
+            <strong>Veilig Thuis</strong>
+            <span><a href="tel:08002000">0800-2000</a>, gratis, dag en nacht, ook voor advies.</span>
+          </li>
+          <li>
+            <strong>De Kindertelefoon</strong>
+            <span>Voor kinderen zelf: <a href="tel:08000432">0800-0432</a>, gratis, dagelijks 11.00–21.00 uur.</span>
+          </li>
+          <li>
+            <strong>Je huisarts</strong>
+            <span>Buiten kantooruren de huisartsenpost.</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="privacy" id="privacy" aria-labelledby="privacy-titel">
+      <div class="wrap">
+        <h2 id="privacy-titel">Privacy</h2>
+        <p>Je bespreekt persoonlijke dingen met Opvoedmaatje. Daarom staat hier precies wat er met je gegevens gebeurt, zonder beloftes die we nog niet kunnen waarmaken.</p>
+        <dl>
+          <div>
+            <dt>Je gesprekken worden opgeslagen</dt>
+            <dd>Ze staan op de eigen server van Opvoedmaatje, zodat je later verder kunt waar je gebleven was.</dd>
+          </div>
+          <div>
+            <dt>Berichten worden verwerkt door OpenAI</dt>
+            <dd>Om een antwoord te maken worden je berichten verwerkt door OpenAI. OpenAI bewaart ze niet voor het trainen van modellen.</dd>
+          </div>
+          <div>
+            <dt>Beheerders kunnen gesprekken inzien</dt>
+            <dd>Dat doen ze voor kwaliteit en veiligheid, bijvoorbeeld om te controleren of Opvoedmaatje goed reageert op moeilijke situaties.</dd>
+          </div>
+          <div>
+            <dt>Uitloggen verwijdert je gegevens niet</dt>
+            <dd>Wil je dat je gegevens worden verwijderd, dan kun je dat aanvragen via het contactadres onderaan deze pagina.</dd>
+          </div>
+          <div>
+            <dt>Privacybeleid en gebruiksvoorwaarden volgen</dt>
+            <dd>Deze worden nog opgesteld en verschijnen op deze pagina zodra ze klaar zijn.</dd>
+          </div>
+        </dl>
+        <div class="feit">
+          <p>Deel liever geen namen, adressen of andere gegevens die niet nodig zijn voor je vraag. Zo houd je zelf in de hand wat er wordt opgeslagen.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="vlak faq" id="vragen" aria-labelledby="vragen-titel">
+      <div class="wrap">
+        <h2 id="vragen-titel">Veelgestelde vragen</h2>
+
+        <details>
+          <summary>Is Opvoedmaatje gratis?</summary>
+          <div>
+            <p>Tijdens de testfase wel. Over een prijs daarna is nog niets besloten. Als dat verandert, lees je het eerst hier.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Voor welke leeftijd is het bedoeld?</summary>
+          <div>
+            <p>Voor ouders en verzorgers van kinderen van 0 tot 18 jaar. De vragen veranderen als je kind ouder wordt, en Opvoedmaatje houdt rekening met de leeftijd die je noemt.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Wat als ik het niet eens ben met een advies?</summary>
+          <div>
+            <p>Dan zeg je dat gewoon. Jij kent je kind en je gezin het beste, en Opvoedmaatje ondersteunt je daarbij. Er is zelden één juiste aanpak. Je kunt vragen naar een andere mogelijkheid of uitleggen waarom iets niet past. Twijfel je over iets belangrijks, bespreek het dan ook met iemand die je vertrouwt of met een professional.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Leest er een mens mee?</summary>
+          <div>
+            <p>Je krijgt antwoord van een AI-assistent, niet van een hulpverlener. Beheerders van Opvoedmaatje kunnen gesprekken wel inzien om de kwaliteit en veiligheid te bewaken. Er kijkt niet live iemand mee tijdens je gesprek.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Wie zit erachter?</summary>
+          <div>
+            <p>Opvoedmaatje is gemaakt door een Nederlandse sociaal ondernemer met een klein team. Het wordt verder ontwikkeld samen met ouders die het uitproberen. Meer daarover lees je <a href="#over">hieronder</a>.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Kan ik mijn gegevens laten verwijderen?</summary>
+          <div>
+            <p>Ja. Stuur een bericht naar het contactadres onderaan deze pagina. Je gesprekken en accountgegevens worden dan verwijderd.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="over" aria-labelledby="over-titel">
+      <div class="wrap">
+        <h2 id="over-titel">Over Opvoedmaatje</h2>
+        <p>
+          Opvoedmaatje is gemaakt door een Nederlandse sociaal ondernemer met een klein team.
+          Het idee komt uit een eenvoudige overtuiging: de meeste ouders willen het beste voor hun kind,
+          maar weten niet altijd wat op dat moment verstandig is. Hulp daarbij zou normaal,
+          toegankelijk en vroeg beschikbaar moeten zijn. Je hoeft niet eerst vast te lopen.
+        </p>
+        <p>
+          Opvoedmaatje staat naast je, niet boven je. Het veroordeelt niet, probeert eerst te begrijpen
+          en helpt je met kleine stappen die passen bij jouw kind en bij wat jij aankunt.
+          Want je hoeft geen perfecte ouder te zijn om een goede ouder te zijn.
+        </p>
+        <p>
+          Opvoedmaatje is in ontwikkeling en wordt verbeterd samen met ouders die het uitproberen.
+          Loop je tegen iets aan of heb je een idee, dan horen we het graag via het contactadres onderaan.
+        </p>
+      </div>
+    </section>
+
+    <section class="cta" aria-labelledby="cta-titel">
+      <div class="wrap">
+        <h2 id="cta-titel">Probeer het met een echte vraag</h2>
+        <p>Begin met iets wat vandaag speelde. Opvoedmaatje denkt met je mee en helpt je één kleine stap te kiezen.</p>
+        <a class="knop" href="[URL-START-GESPREK]">Start een gesprek</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p><strong>Contact:</strong> <a href="mailto:[E-MAILADRES]"><span class="plaatshouder">[E-MAILADRES]</span></a></p>
+      <ul>
+        <li><a href="#privacy">Privacy</a></li>
+        <li><a href="#veiligheid">Veiligheid</a></li>
+        <li><a href="#vragen">Veelgestelde vragen</a></li>
+      </ul>
+      <p>Het privacybeleid en de gebruiksvoorwaarden worden nog opgesteld en volgen op deze pagina.</p>
+      <p>© 2026 Opvoedmaatje. Nu in testfase.</p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      // Markeert in de navigatie welk onderdeel zichtbaar is. Puur ter oriëntatie; geen tracking.
+      if (!('IntersectionObserver' in window)) return;
+      var links = document.querySelectorAll('nav a[href^="#"]');
+      if (!links.length) return;
+      var doelen = [];
+      links.forEach(function (link) {
+        var doel = document.querySelector(link.getAttribute('href'));
+        if (doel) doelen.push({ link: link, doel: doel });
+      });
+      var waarnemer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          var item = doelen.find(function (d) { return d.doel === entry.target; });
+          if (!item) return;
+          if (entry.isIntersecting) {
+            links.forEach(function (l) { l.removeAttribute('aria-current'); });
+            item.link.setAttribute('aria-current', 'true');
+          }
+        });
+      }, { rootMargin: '-40% 0px -50% 0px' });
+      doelen.forEach(function (d) { waarnemer.observe(d.doel); });
+    })();
+  </script>
+</body>
+</html>
